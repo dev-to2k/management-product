@@ -1,49 +1,54 @@
 import React, { useEffect, useState } from "react";
-import CallApi from "./../../utils/apiCaller";
 import { Link } from "react-router-dom";
+import { addProductRequest, getProductRequest, updateProductRequest } from "./../../actions/index";
+import { connect } from "react-redux";
 
-export default function ProductActionPage(props) {
+function ProductActionPage(props) {
   const [id, setId] = useState("");
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [checkStatus, setcheckStatus] = useState(false);
 
+  var { match, onEditProduct, history, onAddProduct, itemEditing, onUpdateProduct } = props;
+
   useEffect(() => {
-    let { match } = props;
     if (match) {
       var id = match.params.id;
-      CallApi(`products/${id}`, "GET", null).then((res) => {
-        var data = res.data;
-        setId(data.id);
-        setName(data.name);
-        setPrice(data.price);
-        setcheckStatus(data.status);
-      });
+      onEditProduct(id);
     }
-  }, [props]);
+  }, [match, onEditProduct]);
 
-  const onSave = (e) => {
-    let { history } = props;
-    e.preventDefault();
+  useEffect(() => {
+    setId(itemEditing.id);
+    setName(itemEditing.name);
+    setPrice(itemEditing.price);
+    setcheckStatus(itemEditing.status);
+  }, [itemEditing]);
+
+  useEffect(() => {
+    setId("");
+    setName("");
+    setPrice("");
+    setcheckStatus(false);
+  }, []);
+
+  const onSave = () => {
+    let product = {
+      id: id,
+      name: name,
+      price: price,
+      status: checkStatus,
+    };
     if (id) {
       // update
-      CallApi(`products/${id}`, "PUT", {
-        name: name,
-        price: price,
-        status: checkStatus,
-      }).then((res) => {
-        history.push("/product-list");
-      });
+      onUpdateProduct(product);
     } else {
-      CallApi("products", "POST", {
-        name: name,
-        price: price,
-        status: checkStatus,
-      }).then((res) => {
-        history.push("/product-list");
-      });
+      // add
+      onAddProduct(product);
     }
+    history.push("/product-list");
   };
+
   return (
     <div className="col-md-6 mt-5 shadow rounded p-3">
       <form onSubmit={onSave}>
@@ -100,3 +105,25 @@ export default function ProductActionPage(props) {
     </div>
   );
 }
+
+const mapStateToProps = (state) => {
+  return {
+    itemEditing: state.itemEditing,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    onAddProduct: (product) => {
+      dispatch(addProductRequest(product));
+    },
+    onEditProduct: (id) => {
+      dispatch(getProductRequest(id));
+    },
+    onUpdateProduct: (product) => {
+      dispatch(updateProductRequest(product));
+    },
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(ProductActionPage);

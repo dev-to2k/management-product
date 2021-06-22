@@ -2,31 +2,18 @@ import React, { useEffect } from "react";
 import ProductList from "../../components/ProductList/ProductList";
 import ProductItem from "../../components/ProductItem/ProductItem";
 import { connect } from "react-redux";
-import CallApi from "./../../utils/apiCaller";
 import { Link } from "react-router-dom";
-import { findIndex } from "lodash";
-import { fetchProductsRequest } from "./../../actions/index";
+import { fetchProductsRequest, deleteProductRequest } from "./../../actions/index";
 
 function ProductListPage(props) {
-  const { products, fetchAllProducts } = props;
+  const { products, fetchAllProducts, onDeleteProduct } = props;
 
   useEffect(() => {
     fetchAllProducts();
   }, [fetchAllProducts]);
 
   const onDelete = (id) => {
-    CallApi(`products/${id}`, "DELETE", null).then((res) => {
-      if (res.status === 200) {
-        // OK
-        var index = findIndex(products, (o) => {
-          return o.id === id;
-        });
-
-        if (index !== -1) {
-          products.splice(index, 1);
-        }
-      }
-    });
+    onDeleteProduct(id);
   };
 
   const showProduct = (products) => {
@@ -62,6 +49,9 @@ const mapDispatchToProps = (dispatch) => {
   return {
     fetchAllProducts: () => {
       dispatch(fetchProductsRequest());
+    },
+    onDeleteProduct: (id) => {
+      dispatch(deleteProductRequest(id));
     },
   };
 };
